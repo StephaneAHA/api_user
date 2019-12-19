@@ -17,12 +17,6 @@ use AppBundle\Form\UserType;
 class UserController extends FOSRestController
 {
 
-//    protected $logger;
-//
-//    public function __construct(Logger $logger) {
-//        $this->logger = $logger;
-//    }
-
 
     /**
      * @Rest\Get("/users", name="app_users_list")
@@ -91,8 +85,9 @@ class UserController extends FOSRestController
     }
 
 
+
     /**
-     * @Rest\View(StatusCode = 204)
+     * @Rest\View(StatusCode = 205)
      * @Rest\Delete(
      *     path = "/users/{id}",
      *     name = "app_user_delete",
@@ -107,14 +102,17 @@ class UserController extends FOSRestController
     public function deleteAction(User $user)
     {
 
-
-        $this->getDoctrine()->getManager()->remove($user);
+        $em = $this->getDoctrine()->getManager();
+        $em->remove($user);
+        $em->flush();
 
         return;
     }
 
+
+
     /**
-     * @Rest\View(StatusCode = 200)
+     * @Rest\View(StatusCode = 202)
      * @Rest\Put(
      *     path = "/users/{id}",
      *     name = "app_user_update",
@@ -154,8 +152,17 @@ class UserController extends FOSRestController
 
         $this->getDoctrine()->getManager()->flush();
 
-        return $user;
+        $statutaction = [];
+        if (!is_null($user)) {
+            $liste['codestatut'] = '202';
+            $liste['message'] = 'Utilisateur modifier avec succès';
+            $liste['user'] = $user;
+            array_push($statutaction, $liste);
+        }
+
+        return $statutaction;
     }
+
 
 
     /**
@@ -183,13 +190,21 @@ class UserController extends FOSRestController
             throw new ResourceValidationException($message);
         }
 
+        $statutaction = [];
         $em = $this->getDoctrine()->getManager();
         $user->setCreationdate(new \DateTime());
         $user->setUpdatedate(new \DateTime());
         $em->persist($user);
         $em->flush();
 
-        return $user;
+        if (!is_null($user)) {
+            $liste['codestatut'] = '201';
+            $liste['message'] = 'Utilisateur enregistrer avec succès';
+            $liste['user'] = $user;
+            array_push($statutaction, $liste);
+        }
+
+        return $statutaction;
     }
 
 
